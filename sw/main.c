@@ -44,7 +44,7 @@ int main(void) {
 	PORTD = 0xFF;
 
   while(1) {
-  	draw();
+		draw();
 		_delay_us(20 * OFF_TIME);
   }
 }
