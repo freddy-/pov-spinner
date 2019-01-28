@@ -1,0 +1,56 @@
+//make clean
+//make
+//make program
+
+#define F_CPU 8000000L
+
+#include "avr/interrupt.h"
+#include "avr/pgmspace.h"
+#include "util/delay.h"
+#include <avr/pgmspace.h>
+
+#define ON_TIME 80
+#define OFF_TIME 350
+
+const uint8_t data[] PROGMEM = {
+	0x00, 0x7f, 0x09, 0x09, 0x09, 0x01, 0x00, // F
+	0x00, 0x7f, 0x09, 0x19, 0x29, 0x46, 0x00, // R
+	0x00, 0x7f, 0x49, 0x49, 0x49, 0x41, 0x00, // E
+	0x00, 0x7f, 0x41, 0x41, 0x22, 0x1c, 0x00, // D
+	0x00, 0x7f, 0x41, 0x41, 0x22, 0x1c, 0x00, // D
+	0x00, 0x07, 0x08, 0x70, 0x08, 0x07, 0x00  // Y
+};
+
+
+void draw(void) {
+	uint8_t i;
+	for (i = sizeof(data); i > 0; i--) {
+		PORTB = ~pgm_read_byte(data + i - 1);
+		_delay_us(ON_TIME);
+		PORTB = 0xFF;
+		_delay_us(OFF_TIME);
+	}
+}
+
+//Main routine
+int main(void) {
+
+	//SETUP OUTPUT PORT
+	DDRB = 0xFF;
+	DDRD = 0xFF;
+
+	//ALL OFF
+	PORTB = 0xFF;
+	PORTD = 0xFF;
+
+  while(1) {
+  	draw();
+		_delay_us(20 * OFF_TIME);
+  }
+}
+
+
+
+
+
+
