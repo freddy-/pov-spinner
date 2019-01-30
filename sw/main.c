@@ -8,6 +8,7 @@
 #include "avr/pgmspace.h"
 #include "util/delay.h"
 #include <avr/pgmspace.h>
+#include <avr/sleep.h>
 
 #define ON_TIME 80
 #define OFF_TIME 350
@@ -21,6 +22,11 @@ const uint8_t data[] PROGMEM = {
 	0x00, 0x07, 0x08, 0x70, 0x08, 0x07, 0x00	// Y
 };
 
+ISR(INT1_vect){
+	GIMSK &= ~(1 << INT1);
+	MCUCR &= ~(1 << SE);
+	cli();
+}
 
 void draw(void) {
 	uint8_t i;
@@ -32,19 +38,37 @@ void draw(void) {
 	}
 }
 
-//Main routine
+void sleep(void) {
+	GIMSK |= (1 << INT1);
+	MCUCR |= (1 << SM0);
+	MCUCR |= (1 << SE);
+
+	sei();
+	asm("SLEEP");
+}
+
 int main(void) {
+	//disable watch dog timer
+	//disable USI
 
-	//SETUP OUTPUT PORT
 	DDRB = 0xFF;
-	DDRD = 0xFF;
+	DDRD |= (1 << PD6) | (1 << PD5) | (1 << PD4);
+	DDRD &= ~(1 << PD3);
 
-	//ALL OFF
 	PORTB = 0xFF;
-	PORTD = 0xFF;
+	PORTD |= (1 << PD6) | (1 << PD5) | (1 << PD4) | (1 << PD3);
 
 	while(1) {
 		draw();
+
+		if ((PIND & (1 << PD3)) == 0) {
+			_delay_ms(200);
+			PORTB = 0xFF;
+			PORTD |= (1 << PD6) | (1 << PD5) | (1 << PD4);
+			sleep();
+			_delay_ms(200);
+		}
+
 		_delay_us(20 * OFF_TIME);
 	}
 }
